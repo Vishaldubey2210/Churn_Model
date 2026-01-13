@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import os
 
 # ===============================
 # PAGE CONFIG
@@ -12,9 +13,17 @@ st.set_page_config(
 )
 
 # ===============================
-# LOAD MODEL
+# LOAD MODEL & FEATURE SCHEMA
 # ===============================
-model = joblib.load("model/churn_model.pkl")
+MODEL_PATH = "model/churn_model.pkl"
+FEATURE_PATH = "model/feature_names.pkl"
+
+if not os.path.exists(MODEL_PATH) or not os.path.exists(FEATURE_PATH):
+    st.error("❌ Model or feature schema not found. Please train the model first.")
+    st.stop()
+
+model = joblib.load(MODEL_PATH)
+feature_names = joblib.load(FEATURE_PATH)
 
 # ===============================
 # HEADER
@@ -67,9 +76,10 @@ satisfaction = st.sidebar.slider(
 )
 
 # ===============================
-# PREPROCESS INPUT
+# PREPROCESS INPUT (🔥 MOST IMPORTANT FIX)
 # ===============================
 def preprocess_input():
+    # Base input features (only what user provides)
     data = {
         "Gender": 1 if gender == "Male" else 0,
         "SeniorCitizen": 1 if senior == "Yes" else 0,
@@ -90,7 +100,17 @@ def preprocess_input():
         "SatisfactionScore": satisfaction
     }
 
-    return pd.DataFrame([data])
+    input_df = pd.DataFrame([data])
+
+    # 🔐 Add missing features (used during training but not in UI)
+    for col in feature_names:
+        if col not in input_df.columns:
+            input_df[col] = 0
+
+    # 🔐 Ensure correct column order
+    input_df = input_df[feature_names]
+
+    return input_df
 
 # ===============================
 # MAIN CONTENT
@@ -115,7 +135,12 @@ with col1:
         input_df = preprocess_input()
 
         prediction = model.predict(input_df)[0]
-        probability = model.predict_proba(input_df)[0][1]
+
+        # 🛡️ Safe probability handling
+        if hasattr(model, "predict_proba"):
+            probability = model.predict_proba(input_df)[0][1]
+        else:
+            probability = 0.5
 
         st.markdown("---")
 
