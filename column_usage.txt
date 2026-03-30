@@ -1,0 +1,199 @@
+
+===== Column: Missing Count =====
+
+[1] missing_percentage = (df.isnull().sum() / len(df)) * 100
+missing_df = pd.DataFrame({
+    'Missing Count': df.isnull().sum(),
+    'Percentage': missing_percentage
+})
+
+missing_df = missing_df[missing_df['Missing Count'] > 0]
+missing_df.sort_values(by='Missing Count', ascending=False).head(10)
+
+[2] plt.figure(figsize=(10,5))
+missing_df.sort_values(by='Missing Count', ascending=False)['Missing Count'].plot(kind='bar')
+plt.title("Missing Values Count")
+plt.xticks(rotation=45)
+plt.show()
+
+===== Column: Churn_Label =====
+
+[1] # check first
+print(df['Churn_Label'].unique())
+
+[2] plt.figure(figsize=(7,4))
+sns.boxplot(x="Churn_Label", y="Monthly_Charge", data=df)
+plt.title("Monthly Charges vs Churn")
+plt.xlabel("Churn Label")
+plt.ylabel("Monthly Charge")
+plt.show()
+
+[3] df['Churn_Label'].isnull().sum()
+
+[4] churn_counts = df['Churn_Label'].value_counts()
+churn_percentage = df['Churn_Label'].value_counts(normalize=True) * 100
+
+[5] # STEP 2: drop redundant columns (correct names)
+df.drop(columns=["Total_Charges", "Total_Revenue"], inplace=True, errors='ignore')
+df.drop(columns=["ZipCode", "Latitude", "Longitude"], inplace=True, errors='ignore')
+
+# STEP 3: X, y
+X = df.drop('Churn_Label', axis=1)
+y = df['Churn_Label']
+
+[6] df['Churn_Label'].value_counts().sort_values(ascending=False)
+
+[7] print(df['Churn_Label'].unique())
+print(df['Churn_Label'].isnull().sum())
+
+[8] plt.figure(figsize=(6,4))
+sns.boxplot(x='Contract', y='Monthly_Charge', hue='Churn_Label', data=df)
+plt.title("Monthly Charges by Contract & Churn")
+plt.show()
+
+[9] sns.countplot(x='Payment_Method', hue='Churn_Label', data=df)
+
+[10] df['Churn_Label'] = df['Churn_Label'].astype(str).str.strip().str.lower()
+df['Churn_Label'] = df['Churn_Label'].map({"yes": 1, "no": 0})
+
+[11] plt.figure(figsize=(7,4))
+sns.countplot(x="Satisfaction_Score", hue="Churn_Label", data=df)
+plt.title("Satisfaction Score vs Churn")
+plt.xlabel("Satisfaction Score")
+plt.ylabel("Customer Count")
+plt.show()
+
+[12] plt.figure(figsize=(6,4))
+sns.countplot(x='Contract', hue='Churn_Label', data=df)
+plt.title("Churn by Contract Type")
+plt.show()
+
+[13] sns.countplot(x='Internet_Service', hue='Churn_Label', data=df)
+
+[14] plt.figure(figsize=(6,4))
+sns.countplot(x="Churn_Label", data=df)
+plt.title("Churn Distribution")
+plt.xlabel("Churn Label")
+plt.ylabel("Customer Count")
+plt.show()
+
+[15] plt.figure(figsize=(6,4))
+sns.countplot(x='Gender', hue='Churn_Label', data=df)
+plt.title("Churn by Gender")
+plt.show()
+
+[16] plt.figure(figsize=(6,4))
+sns.boxplot(x='Churn_Label', y='Tenure_in_Months', data=df)
+plt.title("Tenure vs Churn")
+plt.show()
+
+[17] plt.figure(figsize=(6,4))
+sns.histplot(data=df, x='Monthly_Charge', hue='Churn_Label', kde=True)
+plt.title("Monthly Charges Distribution by Churn")
+plt.show()
+
+[18] plt.figure(figsize=(7,4))
+sns.countplot(x="Contract", hue="Churn_Label", data=df)
+plt.title("Churn by Contract Type")
+plt.xlabel("Contract Type")
+plt.ylabel("Customer Count")
+plt.legend(title="Churn")
+plt.show()
+
+[19] sns.countplot(x='Senior_Citizen', hue='Churn_Label', data=df)
+
+===== Column: Gender =====
+
+[1] plt.figure(figsize=(6,4))
+sns.countplot(x='Gender', hue='Churn_Label', data=df)
+plt.title("Churn by Gender")
+plt.show()
+
+===== Column: Contract =====
+
+[1] plt.figure(figsize=(6,4))
+sns.countplot(x='Contract', hue='Churn_Label', data=df)
+plt.title("Churn by Contract Type")
+plt.show()
+
+[2] plt.figure(figsize=(7,4))
+sns.countplot(x="Contract", hue="Churn_Label", data=df)
+plt.title("Churn by Contract Type")
+plt.xlabel("Contract Type")
+plt.ylabel("Customer Count")
+plt.legend(title="Churn")
+plt.show()
+
+[3] plt.figure(figsize=(6,4))
+sns.boxplot(x='Contract', y='Monthly_Charge', hue='Churn_Label', data=df)
+plt.title("Monthly Charges by Contract & Churn")
+plt.show()
+
+===== Column: Internet_Service =====
+
+[1] sns.countplot(x='Internet_Service', hue='Churn_Label', data=df)
+
+===== Column: Payment_Method =====
+
+[1] sns.countplot(x='Payment_Method', hue='Churn_Label', data=df)
+
+===== Column: Senior_Citizen =====
+
+[1] sns.countplot(x='Senior_Citizen', hue='Churn_Label', data=df)
+
+===== Column: Monthly_Charge =====
+
+[1] plt.figure(figsize=(6,4))
+sns.histplot(data=df, x='Monthly_Charge', hue='Churn_Label', kde=True)
+plt.title("Monthly Charges Distribution by Churn")
+plt.show()
+
+[2] plt.figure(figsize=(7,4))
+sns.boxplot(x="Churn_Label", y="Monthly_Charge", data=df)
+plt.title("Monthly Charges vs Churn")
+plt.xlabel("Churn Label")
+plt.ylabel("Monthly Charge")
+plt.show()
+
+[3] plt.figure(figsize=(6,4))
+sns.boxplot(x='Contract', y='Monthly_Charge', hue='Churn_Label', data=df)
+plt.title("Monthly Charges by Contract & Churn")
+plt.show()
+
+===== Column: Tenure_in_Months =====
+
+[1] plt.figure(figsize=(6,4))
+sns.boxplot(x='Churn_Label', y='Tenure_in_Months', data=df)
+plt.title("Tenure vs Churn")
+plt.show()
+
+===== Column: Satisfaction_Score =====
+
+[1] plt.figure(figsize=(7,4))
+sns.countplot(x="Satisfaction_Score", hue="Churn_Label", data=df)
+plt.title("Satisfaction Score vs Churn")
+plt.xlabel("Satisfaction Score")
+plt.ylabel("Customer Count")
+plt.show()
+
+===== Column: Importance =====
+
+[1] import pandas as pd
+
+feature_importance = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": log_model.coef_[0]
+})
+
+feature_importance = feature_importance.sort_values(by="Importance", ascending=False)
+
+print(feature_importance.head(10))
+
+[2] import pandas as pd
+
+rf_importance = pd.DataFrame({
+    "Feature": X.columns,
+    "Importance": rf_model.feature_importances_
+}).sort_values(by="Importance", ascending=False)
+
+print(rf_importance.head(10))

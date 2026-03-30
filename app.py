@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 # ===============================
-# LOAD MODEL & FEATURE SCHEMA
+# LOAD MODEL & FEATURES
 # ===============================
 MODEL_PATH = "model/churn_model.pkl"
 FEATURE_PATH = "model/feature_names.pkl"
@@ -76,44 +76,33 @@ satisfaction = st.sidebar.slider(
 )
 
 # ===============================
-# PREPROCESS INPUT (🔥 MOST IMPORTANT FIX)
+# PREPROCESS INPUT (FIXED)
 # ===============================
 def preprocess_input():
-    # Base input features (only what user provides)
     data = {
-        "Gender": 1 if gender == "Male" else 0,
-        "SeniorCitizen": 1 if senior == "Yes" else 0,
-        "Married": 1 if married == "Yes" else 0,
-        "Dependents": 1 if dependents == "Yes" else 0,
+        "Gender": gender,
+        "SeniorCitizen": senior,
+        "Married": married,
+        "Dependents": dependents,
         "TenureinMonths": tenure,
-        "Contract": {
-            "Month-to-month": 0,
-            "One year": 1,
-            "Two year": 2
-        }[contract],
-        "InternetService": {
-            "No": 0,
-            "DSL": 1,
-            "Fiber Optic": 2
-        }[internet],
+        "Contract": contract,
+        "InternetService": internet,
         "MonthlyCharge": monthly_charge,
         "SatisfactionScore": satisfaction
     }
 
     input_df = pd.DataFrame([data])
 
-    # 🔐 Add missing features (used during training but not in UI)
-    for col in feature_names:
-        if col not in input_df.columns:
-            input_df[col] = 0
+    # 🔥 SAME encoding as training
+    input_df = pd.get_dummies(input_df)
 
-    # 🔐 Ensure correct column order
-    input_df = input_df[feature_names]
+    # 🔐 match training columns
+    input_df = input_df.reindex(columns=feature_names, fill_value=0)
 
     return input_df
 
 # ===============================
-# MAIN CONTENT
+# MAIN LAYOUT
 # ===============================
 col1, col2 = st.columns([2, 1])
 
@@ -134,37 +123,37 @@ with col1:
     if st.button("🚀 Predict Churn", use_container_width=True):
         input_df = preprocess_input()
 
-        prediction = model.predict(input_df)[0]
+        with st.spinner("Analyzing customer data..."):
+            prediction = model.predict(input_df)[0]
 
-        # 🛡️ Safe probability handling
-        if hasattr(model, "predict_proba"):
-            probability = model.predict_proba(input_df)[0][1]
-        else:
-            probability = 0.5
+            if hasattr(model, "predict_proba"):
+                probability = model.predict_proba(input_df)[0][1]
+            else:
+                probability = 0.5
 
         st.markdown("---")
 
+        # 🎯 RESULT DISPLAY
         if prediction == 1:
-            st.error(
-                f"""
-                ⚠️ **High Churn Risk Detected**
-
-                **Churn Probability:** `{probability:.2%}`
-
-                👉 Immediate retention action recommended.
-                """
-            )
+            st.error("⚠️ High Churn Risk Detected")
         else:
-            st.success(
-                f"""
-                ✅ **Low Churn Risk**
+            st.success("✅ Low Churn Risk")
 
-                **Churn Probability:** `{probability:.2%}`
+        # 📊 Probability
+        st.write(f"### 📊 Churn Probability: {probability:.2%}")
+        st.progress(float(probability))
 
-                👍 Customer is likely to stay.
-                """
-            )
+        # 🎯 Risk Level
+        if probability > 0.7:
+            st.error("🔴 High Risk Customer")
+        elif probability > 0.4:
+            st.warning("🟡 Medium Risk Customer")
+        else:
+            st.success("🟢 Low Risk Customer")
 
+# ===============================
+# SIDE PANEL
+# ===============================
 with col2:
     st.markdown("## 📊 Business Insight")
 
@@ -178,8 +167,8 @@ with col2:
 
         **Recommended Actions:**
         - Offer loyalty discounts
-        - Upsell long-term contracts
-        - Improve service experience
+        - Promote long-term plans
+        - Improve customer experience
         """
     )
 
@@ -188,6 +177,6 @@ with col2:
 # ===============================
 st.markdown("---")
 st.markdown(
-    "<p style='text-align:center; color:gray;'>Built by Vishal Kumar • Internship-Ready ML Project</p>",
+    "<p style='text-align:center; color:gray;'>Built by Vishal Kumar • ML Project</p>",
     unsafe_allow_html=True
 )
