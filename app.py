@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 import os
+import sys
 
 # ===============================
 # PAGE CONFIG
@@ -22,8 +23,18 @@ if not os.path.exists(MODEL_PATH) or not os.path.exists(FEATURE_PATH):
     st.error("❌ Model or feature schema not found. Please train the model first.")
     st.stop()
 
-model = joblib.load(MODEL_PATH)
-feature_names = joblib.load(FEATURE_PATH)
+try:
+    # Load model with error handling
+    model = joblib.load(MODEL_PATH)
+    feature_names = joblib.load(FEATURE_PATH)
+except ModuleNotFoundError as e:
+    st.error(f"❌ Error loading model: Missing module {str(e)}")
+    st.info("Please ensure all dependencies in requirements.txt are installed.")
+    st.stop()
+except Exception as e:
+    st.error(f"❌ Error loading model: {str(e)}")
+    st.info("The model file may be corrupted. Please retrain the model.")
+    st.stop()
 
 # ===============================
 # HEADER
@@ -121,35 +132,39 @@ with col1:
     )
 
     if st.button("🚀 Predict Churn", use_container_width=True):
-        input_df = preprocess_input()
+        try:
+            input_df = preprocess_input()
 
-        with st.spinner("Analyzing customer data..."):
-            prediction = model.predict(input_df)[0]
+            with st.spinner("Analyzing customer data..."):
+                prediction = model.predict(input_df)[0]
 
-            if hasattr(model, "predict_proba"):
-                probability = model.predict_proba(input_df)[0][1]
+                if hasattr(model, "predict_proba"):
+                    probability = model.predict_proba(input_df)[0][1]
+                else:
+                    probability = 0.5
+
+            st.markdown("---")
+
+            # 🎯 RESULT DISPLAY
+            if prediction == 1:
+                st.error("⚠️ High Churn Risk Detected")
             else:
-                probability = 0.5
+                st.success("✅ Low Churn Risk")
 
-        st.markdown("---")
+            # 📊 Probability
+            st.write(f"### 📊 Churn Probability: {probability:.2%}")
+            st.progress(float(probability))
 
-        # 🎯 RESULT DISPLAY
-        if prediction == 1:
-            st.error("⚠️ High Churn Risk Detected")
-        else:
-            st.success("✅ Low Churn Risk")
-
-        # 📊 Probability
-        st.write(f"### 📊 Churn Probability: {probability:.2%}")
-        st.progress(float(probability))
-
-        # 🎯 Risk Level
-        if probability > 0.7:
-            st.error("🔴 High Risk Customer")
-        elif probability > 0.4:
-            st.warning("🟡 Medium Risk Customer")
-        else:
-            st.success("🟢 Low Risk Customer")
+            # 🎯 Risk Level
+            if probability > 0.7:
+                st.error("🔴 High Risk Customer")
+            elif probability > 0.4:
+                st.warning("🟡 Medium Risk Customer")
+            else:
+                st.success("🟢 Low Risk Customer")
+        except Exception as e:
+            st.error(f"❌ Prediction failed: {str(e)}")
+            st.info("Please try again or contact support.")
 
 # ===============================
 # SIDE PANEL
